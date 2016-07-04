@@ -1,0 +1,36 @@
+* !https://anrisoftware.com/projects/attachments/download/217/apache2.0-small.gif! (© 2016 Erwin Müller)
+* "Source github.com":https://github.com/devent/docker_make_utils
+* @git@anrisoftware.com:docker_utils.git@
+* @git@github.com:devent/docker_utils.git@
+
+h1. Docker Utils
+
+This project contains scripts to setup docker utilities that are not docker container. Those utilities will make the development of complex docker setups more easily. It is not intended to have a comprehensive solution for all use cases, but a starting point. It is expected from the user to clone the project, make changes and use it in her own Docker setups.
+
+h2. Usage
+
+The project is made up of various @Makefile@ files to be used with the @make@ tool. Each @Makefile@ have the @help@ target that prints out the usage. Some of the targets expect additional variables in the form of @make FOO=value target@, where @FOO=value@ is the name of the variable and the value, respectively.
+
+h2. Weave
+
+<pre>
+make weave
+</pre>
+
+The target will download the Weave client and start the Weave network.
+
+h2. Convoy
+
+<pre>
+make convoy
+</pre>
+
+The target will download the Convoy client, setup the Convoy service and start the Convoy Docker module. It will create one data and one meta-data volume in the @/volumes@ directory. Those volumes will be used by the Convoy module. The Convoy volumes can be used by a data container, as shown in the example below. In the example, the @vol1@ will be created in Convoy and mounted as @/data@ inside the data container. Other containers can use the mounted volume by using the @--volumes-from data@ option.
+
+<pre>
+sudo docker run -v vol1:/data --volume-driver=convoy --name data -d debian:jessie
+</pre>
+
+h2. License
+
+Licensed under a "Apache 2.0 License.":http://www.apache.org/licenses/LICENSE-2.0 Permissions beyond the scope of this license may be available at @erwin.mueller@deventm.org@ or @erwin.mueller@nttdata.com@.

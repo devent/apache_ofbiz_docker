@@ -1,0 +1,78 @@
+SHELL := /bin/bash
+WEAVE := /usr/local/bin/weave
+.DEFAULT_GOAL := run
+.PHONY: _run _rerun _rm _clean _test _restart _bash _localuser _dataContainer _rm_dataContainer
+#NAME :=
+#DOCKER_CMD :=
+#CONTAINER_USER ?=
+#VOL_NAME ?=
+#MOUNT_PATH ?=
+#DATA_VOLUME_NAME ?=
+
+container_run = docker ps -a | egrep '^.*\s+$(NAME)$$'
+
+_run: $(WEAVE)
+	$(call check_defined, DOCKER_CMD, The command that creates the container)
+	if ! $(container_run); then \
+	eval "$$(weave env)"; \
+	$(DOCKER_CMD); \
+	fi
+
+_rerun: rm run
+
+_rm:
+	$(call check_defined, NAME, The container name)
+	if $(container_run); then \
+	eval "$$(weave env)"; \
+	docker rm -f $(NAME); \
+	fi
+
+_stop:
+	$(call check_defined, NAME, The container name)
+	if $(container_run); then \
+	eval "$$(weave env)"; \
+	docker stop $(NAME); \
+	fi
+
+_clean: rm
+
+_test:
+	[ -n "`$(container_run)`" ]
+	
+_restart: $(WEAVE) test
+	$(call check_defined, NAME, The container name)
+	eval "$$(weave env)"; \
+	docker restart $(NAME)
+
+_bash:
+	$(call check_defined, NAME, The container name)
+	docker exec -it $(NAME) bash
+	
+_containeruser:
+	$(call check_defined, CONTAINER_USER, The local user of the run container)
+	sudo useradd -rU $(CONTAINER_USER); true
+
+$(WEAVE):
+	$(WEAVE) status >/dev/null
+
+data_container_name = $(subst /,_,$(MOUNT_PATH))
+data_container_run = `docker ps -a | egrep '^.*\s+$(DATA_VOLUME_NAME)$$'`
+
+_dataContainer:
+	$(call check_defined, IMAGE_NAME VOL_NAME MOUNT_PATH DATA_VOLUME_NAME, Image name, volume name, mount path and name of the data container)
+	if [ -z "$(data_container_run)" ]; then \
+	eval "$$(weave env)"; \
+	sudo docker run -v $(VOL_NAME):/$(MOUNT_PATH) --volume-driver=convoy --name $(DATA_VOLUME_NAME) -d $(IMAGE_NAME); \
+	fi
+
+
+_rm_dataContainer:
+	$(call check_defined, DATA_VOLUME_NAME, Data container name)
+	if [ -n "$(data_container_run)" ]; then \
+	eval "$$(weave env)"; \
+	sudo docker rm -f $(DATA_VOLUME_NAME); \
+	fi
+
+_testDataContainer:
+	$(call check_defined, DATA_VOLUME_NAME, Data container name)
+	[ -n "$(data_container_run)" ]
